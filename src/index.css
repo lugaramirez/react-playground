@@ -1,0 +1,3 @@
+/* Tailwind v4: a single @import replaces the three @tailwind directives from v3.
+   The Vite plugin handles the rest — no tailwind.config.js needed. */
+@import "tailwindcss";
