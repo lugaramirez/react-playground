@@ -1,0 +1,67 @@
+# ── Node / Vite / React ──────────────────────────────────────────────────────
+node_modules/
+dist/
+dist-ssr/
+*.local
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vite cache
+.vite/
+
+# Test coverage output
+coverage/
+
+# ── macOS ────────────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+.apdisk
+
+# ── IntelliJ IDEA / JetBrains ────────────────────────────────────────────────
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# ── Visual Studio Code ───────────────────────────────────────────────────────
+.vscode/
+*.code-workspace
+.history/
+
+# ── Vim / Neovim ─────────────────────────────────────────────────────────────
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+Session.vim
+Netrw.vim
+.netrwhist
+tags
+[._]*.un~
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ── Superpowers brainstorm artifacts ─────────────────────────────────────────
+# Visual companion server writes mockups here during planning sessions.
+.superpowers/
