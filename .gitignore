@@ -3,11 +3,9 @@ node_modules/
 dist/
 dist-ssr/
 *.local
+*.tsbuildinfo
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
 
 # Vite cache
 .vite/
@@ -65,3 +63,7 @@ pnpm-debug.log*
 # ── Superpowers brainstorm artifacts ─────────────────────────────────────────
 # Visual companion server writes mockups here during planning sessions.
 .superpowers/
+
+# ── Claude Code ──────────────────────────────────────────────────────────────
+# Claude Code session configuration — not intended for version control.
+.claude/
