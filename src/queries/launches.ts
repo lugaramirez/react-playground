@@ -1,4 +1,12 @@
 import { gql } from 'urql'
+import type { Launch } from '../types/launch'
+
+// LaunchesQueryResult types the `data` field returned by useQuery.
+// Callers use: useQuery<LaunchesQueryResult>({ query: LAUNCHES_QUERY, ... })
+// Without this, data.launchesPast would be typed as `any`.
+export interface LaunchesQueryResult {
+  launchesPast: Launch[]
+}
 
 // `gql` is a tagged template literal that parses the query string into a
 // DocumentNode — the format GraphQL clients expect. urql re-exports it from

@@ -22,8 +22,17 @@ export const mockFailedLaunch: Launch = {
   links: { mission_patch_small: null },
 }
 
+// A launch with a mission patch image — used to test the image rendering branch.
+export const mockLaunchWithPatch: Launch = {
+  ...mockLaunch,
+  id: '3',
+  mission_name: 'CRS-28',
+  links: { mission_patch_small: 'https://images2.imgbox.com/a7/f5/ZgdqPGNq_o.png' },
+}
+
 // A full batch of 20 identical launches — used to test `hasMore: true`
 // (when the API returns exactly BATCH_SIZE items, there may be more).
+// Note: all items have launch_success: true — build a custom fixture for mixed success/failure tests.
 export const fullBatch: Launch[] = Array.from({ length: 20 }, (_, i) => ({
   ...mockLaunch,
   id: String(i + 1),
