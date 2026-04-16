@@ -1,25 +1,20 @@
 import { createClient, Provider, cacheExchange, fetchExchange } from 'urql'
 import { LaunchesPage } from './pages/LaunchesPage/LaunchesPage'
-import { installMockFetch } from './data/mockFetch'
+import { mockExchange } from './data/mockExchange'
 
 // Set to true when the real SpaceX GraphQL API is unavailable.
-// Intercepts fetch calls and returns local mock data instead.
+// Swaps in a local exchange that returns mock data — no network call made.
+// Set to false and restore a real API URL to use live data.
 const USE_MOCK = true
 
-if (USE_MOCK) {
-  installMockFetch()
-}
-
-// urql v5 requires exchanges to be passed explicitly — they are no longer
-// included by default. cacheExchange deduplicates identical in-flight requests;
-// fetchExchange performs the actual HTTP call (or the mock, if USE_MOCK is set).
+// urql v5 requires exchanges to be passed explicitly.
+// In mock mode we skip fetchExchange entirely — mockExchange intercepts every
+// operation and returns data directly, so nothing ever hits the network.
 const client = createClient({
   url: 'https://api.spacex.land/graphql/',
-  exchanges: [cacheExchange, fetchExchange],
+  exchanges: USE_MOCK ? [mockExchange] : [cacheExchange, fetchExchange],
 })
 
-// The urql `Provider` makes the client available to every `useQuery` call
-// in the component tree below it — similar to React context.
 export function App() {
   return (
     <Provider value={client}>
