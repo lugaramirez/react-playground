@@ -2,10 +2,9 @@ import { createClient, Provider, cacheExchange, fetchExchange } from 'urql'
 import { LaunchesPage } from './pages/LaunchesPage/LaunchesPage'
 import { mockExchange } from './data/mockExchange'
 
-// Set to true when the real SpaceX GraphQL API is unavailable.
-// Swaps in a local exchange that returns mock data — no network call made.
-// Set to false and restore a real API URL to use live data.
-const USE_MOCK = true
+// Controlled by the VITE_USE_MOCK env variable — set via npm run dev:mock.
+// Vite exposes variables prefixed with VITE_ to client code via import.meta.env.
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
 // urql v5 requires exchanges to be passed explicitly.
 // In mock mode we skip fetchExchange entirely — mockExchange intercepts every
