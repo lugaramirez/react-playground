@@ -9,8 +9,9 @@ Built with Vite + React + TypeScript, urql (GraphQL), Tailwind CSS v4, and Vites
 ## Running the app
 
 ```bash
-npm install       # install dependencies (first time only)
-npm run dev       # start dev server at http://localhost:5173
+npm install          # install dependencies (first time only)
+npm run dev:mock     # start dev server with mock data (use this — real API is down)
+npm run dev          # start dev server against the real SpaceX API (currently offline)
 ```
 
 ### Other commands
@@ -21,6 +22,10 @@ npm run test:watch    # re-run tests on file save
 npm run build         # production build (output in dist/)
 npm run lint          # run ESLint
 ```
+
+### Mock vs live data
+
+The app fetches from the SpaceX GraphQL API, which is currently offline. `dev:mock` sets the `VITE_USE_MOCK=true` environment variable, which swaps in a local data layer (`src/data/mockExchange.ts`) that returns static launches without making any network calls. Switch to `dev` when a working API endpoint is available and update the URL in `src/App.tsx`.
 
 ---
 
