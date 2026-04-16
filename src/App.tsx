@@ -1,14 +1,18 @@
 import { createClient, Provider, cacheExchange, fetchExchange } from 'urql'
 import { LaunchesPage } from './pages/LaunchesPage/LaunchesPage'
+import { installMockFetch } from './data/mockFetch'
 
-// `createClient` creates a urql client bound to a specific GraphQL endpoint.
-// This is the single place where the API URL lives — if the endpoint changes,
-// you only update it here.
-//
-// The SpaceX community API at spacex.land is free and requires no auth token.
+// Set to true when the real SpaceX GraphQL API is unavailable.
+// Intercepts fetch calls and returns local mock data instead.
+const USE_MOCK = true
+
+if (USE_MOCK) {
+  installMockFetch()
+}
+
 // urql v5 requires exchanges to be passed explicitly — they are no longer
 // included by default. cacheExchange deduplicates identical in-flight requests;
-// fetchExchange performs the actual HTTP call.
+// fetchExchange performs the actual HTTP call (or the mock, if USE_MOCK is set).
 const client = createClient({
   url: 'https://api.spacex.land/graphql/',
   exchanges: [cacheExchange, fetchExchange],
