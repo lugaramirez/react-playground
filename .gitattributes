@@ -1,0 +1,2 @@
+node_modules/** linguist-vendored
+eslint.config.js linguist-language=TypeScript
