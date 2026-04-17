@@ -19,5 +19,7 @@ export default defineConfig({
     // jsdom simulates a browser DOM in Node.js so React components can render.
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // Playwright e2e tests live in e2e/ and are run with `npm run test:e2e`, not Vitest.
+    exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**'],
   },
 })

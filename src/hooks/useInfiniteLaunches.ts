@@ -42,8 +42,25 @@ export function useInfiniteLaunches(
     requestPolicy: 'network-only',
   })
 
+  // Tracks the last-committed sort/direction to distinguish "values actually changed"
+  // from "effect ran on mount" (which is the same thing in React's eyes).
+  const prevSortRef = useRef(sort)
+  const prevDirectionRef = useRef(direction)
+
+  // Tracks which page offsets have already been appended in the current sort session.
+  // This is the deduplication key: offsets are business-stable, array references are not.
+  //
+  // Why not compare data references? React Strict Mode tears down and re-establishes
+  // urql's subscription on Phase 2, which re-runs the exchange and returns a brand-new
+  // array reference — even for the same offset and same data values.
+  const fetchedOffsetsRef = useRef(new Set<number>())
+
   // When sort or direction changes, reset to the beginning.
   useEffect(() => {
+    if (prevSortRef.current === sort && prevDirectionRef.current === direction) return
+    prevSortRef.current = sort
+    prevDirectionRef.current = direction
+    fetchedOffsetsRef.current = new Set()
     setOffset(0)
     setAccumulated([])
   }, [sort, direction])
@@ -57,7 +74,10 @@ export function useInfiniteLaunches(
 
   useEffect(() => {
     if (!data?.launchesPast) return
-    const isFirstPage = offsetAtFetch.current === 0
+    const currentOffset = offsetAtFetch.current
+    if (fetchedOffsetsRef.current.has(currentOffset)) return
+    fetchedOffsetsRef.current.add(currentOffset)
+    const isFirstPage = currentOffset === 0
     setAccumulated(prev =>
       isFirstPage ? [...data.launchesPast] : [...prev, ...data.launchesPast]
     )

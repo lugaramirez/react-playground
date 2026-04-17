@@ -17,10 +17,14 @@ npm run dev          # start dev server against the real SpaceX API (currently o
 ### Other commands
 
 ```bash
-npm test              # run all tests once
-npm run test:watch    # re-run tests on file save
-npm run build         # production build (output in dist/)
-npm run lint          # run ESLint
+npm test                  # run all Vitest tests once (unit + integration)
+npm run test:unit         # run only unit tests
+npm run test:integration  # run only integration tests (real urql pipeline)
+npm run test:e2e          # run Playwright e2e tests (starts dev server automatically)
+npm run test:all          # run all three test suites in sequence
+npm run test:watch        # re-run tests on file save
+npm run build             # production build (output in dist/)
+npm run lint              # run ESLint
 ```
 
 ### Mock vs live data
