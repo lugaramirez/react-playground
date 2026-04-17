@@ -37,7 +37,7 @@ export async function fetchLaunches(
       query: {},
       options: {
         limit,
-        skip: offset,
+        offset,
         sort: { [sort]: order },
         populate: ['rocket'],
       },
