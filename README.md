@@ -10,7 +10,7 @@ Built with Vite + React + TypeScript, Tailwind CSS v4, and Vitest.
 
 ```bash
 npm install          # install dependencies (first time only)
-npm run dev:mock     # start dev server with mock data (use this — real API is down)
+npm run dev:mock     # start dev server with mock data (no network calls)
 npm run dev          # start dev server against the real SpaceX API
 ```
 
@@ -19,7 +19,7 @@ npm run dev          # start dev server against the real SpaceX API
 ```bash
 npm test                  # run all Vitest tests once (unit + integration)
 npm run test:unit         # run only unit tests
-npm run test:integration  # run only integration tests (real urql pipeline)
+npm run test:integration  # run only integration tests (full component pipeline)
 npm run test:e2e          # run Playwright e2e tests (starts dev server automatically)
 npm run test:all          # run all three test suites in sequence
 npm run test:watch        # re-run tests on file save
@@ -37,7 +37,7 @@ The app fetches from the SpaceX REST API v4 (`https://api.spacexdata.com/v4/laun
 
 ```
 src/
-  App.tsx                        # Root component — sets up the urql GraphQL client
+  App.tsx                        # Root component — renders LaunchesPage
   main.tsx                       # Entry point — mounts App into the DOM
   index.css                      # Tailwind CSS import
 
@@ -45,15 +45,16 @@ src/
     launch.ts                    # Shared TypeScript types (Launch, SortField, PageSize, …)
 
   utils/
-    sortFieldMap.ts              # Maps UI sort labels to GraphQL field names
+    sortFieldMap.ts              # Maps UI sort labels to SpaceX REST API field names
 
-  queries/
-    launches.ts                  # The GraphQL query sent to the SpaceX API
+  api/
+    launches.ts                  # REST client — fetches from SpaceX v4 API or mock,
+                                 # transforms response to the Launch domain type
 
   data/
     mockLaunches.ts              # 25 static Launch objects used in dev and tests
-    mockExchange.ts              # urql exchange that returns mock data without network calls
-                                 # (active when VITE_USE_MOCK=true)
+    mockExchange.ts              # queryMockData — pure sort+slice function used by
+                                 # api/launches.ts when VITE_USE_MOCK=true
 
   hooks/
     usePaginatedLaunches.ts      # Fetches one page at a time (limit/offset)
