@@ -50,6 +50,11 @@ src/
   queries/
     launches.ts                  # The GraphQL query sent to the SpaceX API
 
+  data/
+    mockLaunches.ts              # 25 static Launch objects used in dev and tests
+    mockExchange.ts              # urql exchange that returns mock data without network calls
+                                 # (active when VITE_USE_MOCK=true)
+
   hooks/
     usePaginatedLaunches.ts      # Fetches one page at a time (limit/offset)
     useInfiniteLaunches.ts       # Accumulates pages for infinite scroll
@@ -67,4 +72,8 @@ src/
   test/
     setup.ts                     # Vitest + jest-dom setup
     mocks.ts                     # Shared mock Launch objects used across tests
+
+e2e/
+  launches.spec.ts               # Playwright end-to-end tests (page load, pagination,
+                                 # sorting, infinite scroll) — run with npm run test:e2e
 ```
