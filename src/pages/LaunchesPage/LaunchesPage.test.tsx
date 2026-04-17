@@ -1,10 +1,10 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { useQuery } from 'urql'
+import { fetchLaunches } from '../../api/launches'
 import { LaunchesPage } from './LaunchesPage'
 import { mockLaunch } from '../../test/mocks'
 
-vi.mock('urql', () => ({ useQuery: vi.fn(), gql: String.raw }))
+vi.mock('../../api/launches', () => ({ fetchLaunches: vi.fn() }))
 
 // IntersectionObserver is not available in jsdom.
 vi.stubGlobal('IntersectionObserver', class {
@@ -15,10 +15,7 @@ vi.stubGlobal('IntersectionObserver', class {
 })
 
 beforeEach(() => {
-  vi.mocked(useQuery).mockReturnValue([
-    { data: { launchesPast: [mockLaunch] }, fetching: false, error: undefined },
-    vi.fn(),
-  ] as any)
+  vi.mocked(fetchLaunches).mockResolvedValue([mockLaunch])
 })
 
 describe('LaunchesPage', () => {
@@ -33,9 +30,9 @@ describe('LaunchesPage', () => {
     expect(screen.getByText('5')).toBeInTheDocument()
   })
 
-  it('renders the launch list', () => {
+  it('renders the launch list', async () => {
     render(<LaunchesPage />)
-    expect(screen.getByText('Starlink 6-14')).toBeInTheDocument()
+    expect(await screen.findByText('Starlink 6-14')).toBeInTheDocument()
   })
 
   it('shows pagination controls in paginated mode', () => {
@@ -54,22 +51,20 @@ describe('LaunchesPage', () => {
   it('resets to page 1 and passes offset 0 when sort changes', async () => {
     const user = userEvent.setup()
     render(<LaunchesPage />)
+    await screen.findByText('Starlink 6-14')
     await user.click(screen.getByText('Name'))
-    expect(vi.mocked(useQuery)).toHaveBeenCalledWith(
-      expect.objectContaining({
-        variables: expect.objectContaining({ sort: 'mission_name', offset: 0 }),
-      })
+    await waitFor(() =>
+      expect(vi.mocked(fetchLaunches)).toHaveBeenCalledWith(5, 0, 'name', 'desc')
     )
   })
 
   it('passes correct limit when page size changes to 10', async () => {
     const user = userEvent.setup()
     render(<LaunchesPage />)
+    await screen.findByText('Starlink 6-14')
     await user.click(screen.getByText('10'))
-    expect(vi.mocked(useQuery)).toHaveBeenCalledWith(
-      expect.objectContaining({
-        variables: expect.objectContaining({ limit: 10, offset: 0 }),
-      })
+    await waitFor(() =>
+      expect(vi.mocked(fetchLaunches)).toHaveBeenCalledWith(10, 0, 'date_local', 'desc')
     )
   })
 })

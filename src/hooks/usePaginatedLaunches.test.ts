@@ -1,99 +1,78 @@
-import { renderHook } from '@testing-library/react'
-import { useQuery } from 'urql'
+import { renderHook, waitFor, act } from '@testing-library/react'
+import { fetchLaunches } from '../api/launches'
 import { usePaginatedLaunches } from './usePaginatedLaunches'
 import { mockLaunch, fullBatch } from '../test/mocks'
 
-// We mock urql's useQuery so tests never make real network calls.
-// Each test controls exactly what the hook "receives" from the API.
-vi.mock('urql', () => ({ useQuery: vi.fn(), gql: String.raw }))
+vi.mock('../api/launches', () => ({ fetchLaunches: vi.fn() }))
 
 const mockSuccess = (launches: typeof mockLaunch[]) =>
-  vi.mocked(useQuery).mockReturnValue([
-    { data: { launchesPast: launches }, fetching: false, error: undefined },
-    vi.fn(),
-  ] as any)
+  vi.mocked(fetchLaunches).mockResolvedValue(launches)
 
 describe('usePaginatedLaunches', () => {
   beforeEach(() => mockSuccess([mockLaunch]))
 
-  it('returns launches from the query result', () => {
+  it('returns launches from the query result', async () => {
     const { result } = renderHook(() =>
       usePaginatedLaunches({ sort: 'date', direction: 'desc', page: 1, pageSize: 5 })
     )
+    await waitFor(() => expect(result.current.fetching).toBe(false))
     expect(result.current.launches).toHaveLength(1)
     expect(result.current.launches[0].mission_name).toBe('Starlink 6-14')
   })
 
-  it('returns an empty array while fetching', () => {
-    vi.mocked(useQuery).mockReturnValue([
-      { data: undefined, fetching: true, error: undefined },
-      vi.fn(),
-    ] as any)
+  it('returns an empty array while fetching', async () => {
+    let resolve!: (v: Awaited<ReturnType<typeof fetchLaunches>>) => void
+    vi.mocked(fetchLaunches).mockReturnValue(new Promise(r => { resolve = r }))
     const { result } = renderHook(() =>
       usePaginatedLaunches({ sort: 'date', direction: 'desc', page: 1, pageSize: 5 })
     )
     expect(result.current.launches).toEqual([])
     expect(result.current.fetching).toBe(true)
+    await act(async () => resolve([]))
   })
 
   it('calculates offset as (page - 1) * pageSize', () => {
-    mockSuccess([mockLaunch])
     renderHook(() =>
       usePaginatedLaunches({ sort: 'date', direction: 'desc', page: 3, pageSize: 10 })
     )
-    expect(vi.mocked(useQuery)).toHaveBeenCalledWith(
-      expect.objectContaining({
-        variables: expect.objectContaining({ offset: 20, limit: 10 }),
-      })
-    )
+    expect(vi.mocked(fetchLaunches)).toHaveBeenCalledWith(10, 20, 'date_local', 'desc')
   })
 
-  it('maps sort field "date" to "launch_date_local"', () => {
+  it('maps sort field "date" to "date_local"', () => {
     renderHook(() =>
       usePaginatedLaunches({ sort: 'date', direction: 'asc', page: 1, pageSize: 5 })
     )
-    expect(vi.mocked(useQuery)).toHaveBeenCalledWith(
-      expect.objectContaining({
-        variables: expect.objectContaining({ sort: 'launch_date_local', order: 'asc' }),
-      })
-    )
+    expect(vi.mocked(fetchLaunches)).toHaveBeenCalledWith(5, 0, 'date_local', 'asc')
   })
 
-  it('maps sort field "name" to "mission_name"', () => {
+  it('maps sort field "name" to "name"', () => {
     renderHook(() =>
       usePaginatedLaunches({ sort: 'name', direction: 'asc', page: 1, pageSize: 5 })
     )
-    expect(vi.mocked(useQuery)).toHaveBeenCalledWith(
-      expect.objectContaining({
-        variables: expect.objectContaining({ sort: 'mission_name' }),
-      })
-    )
+    expect(vi.mocked(fetchLaunches)).toHaveBeenCalledWith(5, 0, 'name', 'asc')
   })
 
-  it('maps sort field "status" to "launch_success"', () => {
+  it('maps sort field "status" to "success"', () => {
     renderHook(() =>
       usePaginatedLaunches({ sort: 'status', direction: 'desc', page: 1, pageSize: 5 })
     )
-    expect(vi.mocked(useQuery)).toHaveBeenCalledWith(
-      expect.objectContaining({
-        variables: expect.objectContaining({ sort: 'launch_success' }),
-      })
-    )
+    expect(vi.mocked(fetchLaunches)).toHaveBeenCalledWith(5, 0, 'success', 'desc')
   })
 
-  it('returns hasMore true when result count equals pageSize', () => {
+  it('returns hasMore true when result count equals pageSize', async () => {
     mockSuccess(fullBatch)
     const { result } = renderHook(() =>
       usePaginatedLaunches({ sort: 'date', direction: 'desc', page: 1, pageSize: 20 })
     )
+    await waitFor(() => expect(result.current.fetching).toBe(false))
     expect(result.current.hasMore).toBe(true)
   })
 
-  it('returns hasMore false when result count is less than pageSize', () => {
-    mockSuccess([mockLaunch])
+  it('returns hasMore false when result count is less than pageSize', async () => {
     const { result } = renderHook(() =>
       usePaginatedLaunches({ sort: 'date', direction: 'desc', page: 1, pageSize: 5 })
     )
+    await waitFor(() => expect(result.current.fetching).toBe(false))
     expect(result.current.hasMore).toBe(false)
   })
 })

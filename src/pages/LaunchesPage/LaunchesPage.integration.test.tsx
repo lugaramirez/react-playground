@@ -1,16 +1,18 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { createClient, Provider } from 'urql'
-import { mockExchange } from '../../data/mockExchange'
+import { fetchLaunches } from '../../api/launches'
+import { queryMockData } from '../../data/mockExchange'
 import { LaunchesPage } from './LaunchesPage'
 
-// Unlike LaunchesPage.test.tsx, this file does NOT mock urql.
-// It renders LaunchesPage inside a real urql client backed by mockExchange,
-// so the full pipeline runs: component → hook → useQuery → exchange → data.
+// Unlike LaunchesPage.test.tsx, this file does NOT mock the hooks.
+// It renders LaunchesPage with fetchLaunches backed by queryMockData,
+// so the full pipeline runs: component → hook → fetchLaunches → data.
 //
 // These are the tests that would have caught the pagination and sorting bugs:
 // the unit tests verified that the right variables were *sent*, but never
 // checked that the right data was *shown*.
+
+vi.mock('../../api/launches', () => ({ fetchLaunches: vi.fn() }))
 
 vi.stubGlobal('IntersectionObserver', class {
   observe = vi.fn()
@@ -19,13 +21,14 @@ vi.stubGlobal('IntersectionObserver', class {
   constructor(_cb: IntersectionObserverCallback, _opts?: IntersectionObserverInit) {}
 })
 
-function renderPage() {
-  const client = createClient({ url: '/graphql', exchanges: [mockExchange] })
-  return render(
-    <Provider value={client}>
-      <LaunchesPage />
-    </Provider>
+beforeEach(() => {
+  vi.mocked(fetchLaunches).mockImplementation((limit, offset, sort, order) =>
+    Promise.resolve(queryMockData({ limit, offset, sort, order }))
   )
+})
+
+function renderPage() {
+  return render(<LaunchesPage />)
 }
 
 describe('LaunchesPage integration — pagination', () => {

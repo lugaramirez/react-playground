@@ -1,7 +1,7 @@
 import { queryMockData } from './mockExchange'
 
 // These tests cover the data layer that the hook unit tests never reach.
-// The hook tests mock useQuery directly, so the sort/slice logic in this file
+// The hook tests mock fetchLaunches directly, so the sort/slice logic in this file
 // was previously untested — which is exactly why the pagination and sorting
 // bugs went undetected.
 
@@ -36,35 +36,35 @@ describe('queryMockData — sorting', () => {
   })
 
   it('date ascending — oldest launch is first', () => {
-    const results = queryMockData({ limit: 5, sort: 'launch_date_local', order: 'asc' })
+    const results = queryMockData({ limit: 5, sort: 'date_local', order: 'asc' })
     // Demo Mission 1 and FalconSat share the oldest date; stable sort preserves
     // insertion order so Demo Mission 1 (earlier in the array) comes first.
     expect(results[0].mission_name).toBe('Demo Mission 1')
   })
 
   it('name descending — Z comes first', () => {
-    const results = queryMockData({ limit: 5, sort: 'mission_name', order: 'desc' })
+    const results = queryMockData({ limit: 5, sort: 'name', order: 'desc' })
     expect(results[0].mission_name).toBe('Zuma')
   })
 
   it('name ascending — A comes first', () => {
-    const results = queryMockData({ limit: 5, sort: 'mission_name', order: 'asc' })
+    const results = queryMockData({ limit: 5, sort: 'name', order: 'asc' })
     expect(results[0].mission_name).toBe('Arabsat-6A')
   })
 
   it('status descending — successful launches come first', () => {
-    const results = queryMockData({ limit: 25, sort: 'launch_success', order: 'desc' })
+    const results = queryMockData({ limit: 25, sort: 'success', order: 'desc' })
     expect(results[0].launch_success).toBe(true)
     expect(results[results.length - 1].launch_success).toBe(false)
   })
 
   it('status ascending — failed launches come first', () => {
-    const results = queryMockData({ limit: 25, sort: 'launch_success', order: 'asc' })
+    const results = queryMockData({ limit: 25, sort: 'success', order: 'asc' })
     expect(results[0].launch_success).toBe(false)
   })
 
   it('unknown launches (null) appear between success and failed in status sort', () => {
-    const results = queryMockData({ limit: 25, sort: 'launch_success', order: 'desc' })
+    const results = queryMockData({ limit: 25, sort: 'success', order: 'desc' })
     const statuses = results.map(l => l.launch_success)
     const nullIndex = statuses.indexOf(null)
     const firstFalseIndex = statuses.indexOf(false)

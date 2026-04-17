@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useQuery } from 'urql'
-import { LAUNCHES_QUERY } from '../queries/launches'
+import { fetchLaunches } from '../api/launches'
 import { SORT_FIELD_MAP } from '../utils/sortFieldMap'
 import type { Launch, SortField, SortDirection } from '../types/launch'
 
@@ -27,69 +26,53 @@ export function useInfiniteLaunches(
 ): UseInfiniteLaunchesResult {
   const [offset, setOffset] = useState(0)
   const [accumulated, setAccumulated] = useState<Launch[]>([])
-
-  // useQuery runs the GraphQL query and re-runs whenever its variables change.
-  // `requestPolicy: 'network-only'` bypasses urql's cache so each fetchMore
-  // always hits the network — important for consistent pagination behavior.
-  const [{ data, fetching, error }] = useQuery<{ launchesPast: Launch[] }>({
-    query: LAUNCHES_QUERY,
-    variables: {
-      limit: BATCH_SIZE,
-      offset,
-      sort: SORT_FIELD_MAP[sort],
-      order: direction,
-    },
-    requestPolicy: 'network-only',
-  })
+  const [fetching, setFetching] = useState(true)
+  const [error, setError] = useState<Error | undefined>()
+  const [hasMore, setHasMore] = useState(false)
 
   // Tracks the last-committed sort/direction to distinguish "values actually changed"
   // from "effect ran on mount" (which is the same thing in React's eyes).
   const prevSortRef = useRef(sort)
   const prevDirectionRef = useRef(direction)
 
-  // Tracks which page offsets have already been appended in the current sort session.
-  // This is the deduplication key: offsets are business-stable, array references are not.
-  //
-  // Why not compare data references? React Strict Mode tears down and re-establishes
-  // urql's subscription on Phase 2, which re-runs the exchange and returns a brand-new
-  // array reference — even for the same offset and same data values.
-  const fetchedOffsetsRef = useRef(new Set<number>())
-
   // When sort or direction changes, reset to the beginning.
   useEffect(() => {
     if (prevSortRef.current === sort && prevDirectionRef.current === direction) return
     prevSortRef.current = sort
     prevDirectionRef.current = direction
-    fetchedOffsetsRef.current = new Set()
     setOffset(0)
     setAccumulated([])
   }, [sort, direction])
 
-  // Ref tracks the offset at the time data was received, allowing us to
-  // distinguish a fresh load (offset 0) from a subsequent page (offset > 0)
-  // without adding `offset` to the effect's dependency array (which would
-  // cause double-appending as offset and data update in separate render cycles).
-  const offsetAtFetch = useRef(offset)
-  offsetAtFetch.current = offset
-
+  // Fetch whenever sort, direction, or offset changes.
+  // AbortController handles React Strict Mode's double-invoke: the first
+  // controller is aborted on cleanup, the second fetch lands and commits data.
   useEffect(() => {
-    if (!data?.launchesPast) return
-    const currentOffset = offsetAtFetch.current
-    if (fetchedOffsetsRef.current.has(currentOffset)) return
-    fetchedOffsetsRef.current.add(currentOffset)
-    const isFirstPage = currentOffset === 0
-    setAccumulated(prev =>
-      isFirstPage ? [...data.launchesPast] : [...prev, ...data.launchesPast]
-    )
-    // Intentionally omits `offset` from deps — see offsetAtFetch comment above.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data?.launchesPast])
+    const controller = new AbortController()
+    setFetching(true)
+    setError(undefined)
+
+    fetchLaunches(BATCH_SIZE, offset, SORT_FIELD_MAP[sort], direction)
+      .then(data => {
+        if (controller.signal.aborted) return
+        setAccumulated(prev => offset === 0 ? data : [...prev, ...data])
+        setHasMore(data.length === BATCH_SIZE)
+        setFetching(false)
+      })
+      .catch(err => {
+        if (controller.signal.aborted) return
+        setError(err as Error)
+        setFetching(false)
+      })
+
+    return () => controller.abort()
+  }, [sort, direction, offset])
 
   return {
     launches: accumulated,
     fetching,
-    error: error as Error | undefined,
+    error,
     fetchMore: () => setOffset(o => o + BATCH_SIZE),
-    hasMore: (data?.launchesPast?.length ?? 0) === BATCH_SIZE,
+    hasMore,
   }
 }
